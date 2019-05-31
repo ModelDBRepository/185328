@@ -1,0 +1,255 @@
+//Replace HHk with HHkM
+nrn_load_dll("./dll/nrnmech.dll")
+load_file("nrngui.hoc")
+load_file("electrod.hoc")
+//load_template("Inserter")
+
+load_file("thresh.hoc")
+
+objref apc
+
+create soma
+access soma
+insert HHk
+insert HHkM
+insert HHna
+insert HHleak
+apc=new APCount(.5)
+
+
+//{diam=500  L=100} 
+{diam=10  L=10/PI} // area 100 um2 means  nA current converts to uA/cm2 for soma
+{
+
+xpanel("RunControl", 0)
+v_init = -65
+xvalue("Reset","v_init", 1,"stdinit()", 1, 1 )
+xbutton("Reset & Run","run()")
+xbutton("Stop","stoprun=1")
+runStopIn = 1
+xvalue("Continue for","runStopIn", 1,"{continuerun(t + runStopIn) stoprun=1}", 1, 1 )
+//xbutton("Single Step","steprun()")
+dt=0.0125
+t = 5
+xvalue("t","t", 2 )
+tstop = 10
+xvalue("Total #","tstop", 1,"tstop_changed()", 0, 1 )
+celsius = 6.3
+xvalue("Temp. ","celsius", 1,"", 0, 1 )
+xpanel(304,20)
+}
+
+{
+xpanel("Panel & Graph Manager", 0)
+xlabel("The default channels are HH Na & K")
+xlabel("HHkM channels use n^6")
+xbutton("Replace HH K channels with HHkM channels","HHM()")
+xbutton("Return to HHk channels","HHRet()")
+xbutton("Print","printing()")
+xbutton("Quit","if (boolean_dialog(\"Confirm Quit?\", \"Yes\", \"No\")) quit ()")
+xpanel(0,25)
+}
+
+
+
+//xopen("trode.ses")
+objectvar save_window_, rvp_
+objectvar scene_vector_[6]
+objectvar ocbox_, ocbox_list_, scene_, scene_list_
+{ocbox_list_ = new List()  scene_list_ = new List()}
+
+//Begin I/V Clamp Electrode
+{
+load_file("electrod.hoc")
+}
+{
+ocbox_=new Electrode(0)
+execute("can_locate=1 sec=\"soma\" xloc=0.5 locate(0)", ocbox_)
+execute("vc.dur[0]=0.5 vc.amp[0]=-70", ocbox_)
+execute("vc.dur[1]=2.5 vc.amp[1]=-35", ocbox_)
+execute("vc.dur[2]=100 vc.amp[2]=-70", ocbox_)
+execute("stim.del=0.5 stim.dur=0.1 stim.amp=0.1", ocbox_)
+execute("vcsteps=5", ocbox_)
+execute("samp=stim.amp  store_vclamp() glyph()", ocbox_)
+ocbox_ = ocbox_.v1
+ocbox_.map("Stimulus Control", 2, 275, 240, 328)
+}
+objref ocbox_
+//End I/V Clamp Electrode
+
+objectvar scene_vector_[1]
+{doNotify()}
+
+
+//xopen("vvst.ses")
+objectvar save_window_, rvp_
+objectvar scene_vector_[6]
+objectvar ocbox_, ocbox_list_, scene_, scene_list_
+{ocbox_list_ = new List()  scene_list_ = new List()}
+{
+save_window_ = new Graph(0)
+save_window_.size(0,10,-75,55)
+scene_vector_[3] = save_window_
+{save_window_.view(0, -75, 10, 130, 578, 23, 468, 233)}
+graphList[0].append(save_window_)
+save_window_.save_name("graphList[0].")
+save_window_.label(0.361111, 0.927039, "Voltage vs Time", 2, 1, 0, 0, 1)
+save_window_.label(0.0299145, 0.76824, "mV", 2, 1, 0, 0, 1)
+save_window_.label(0.93376, 0.484979, "ms", 2, 1, 0, 0, 1)
+save_window_.label(0.190171, 0.081545, "EK", 2, 1, 0, 0, 3)
+save_window_.label(0.183761, 0.901288, "ENa", 2, 1, 0, 0, 2)
+save_window_.addexpr("v(.5)", 1, 1, 0.9999, 0.99984, 2)
+save_window_.addvar("soma.ek( 0.5 )", 3, 2, 0.9998718, 0.891416, 2)
+save_window_.addvar("soma.ena( 0.5 )", 2, 2, 0.99984, 0.895708, 2)
+}
+objectvar scene_vector_[1]
+{doNotify()}
+
+
+//xopen("curr.ses")
+objectvar save_window_, rvp_
+objectvar scene_vector_[12]
+objectvar ocbox_, ocbox_list_, scene_, scene_list_
+{ocbox_list_ = new List()  scene_list_ = new List()}
+{
+save_window_ = new Graph(0)
+save_window_.size(0,10,-1.5,1.5)
+scene_vector_[4] = save_window_
+{save_window_.view(0, -1.5, 10, 3, 578, 284, 466, 231)}
+graphList[1].append(save_window_)
+save_window_.save_name("graphList[1].")
+save_window_.label(0.746781, 0.285714, "INa_ HH", 2, 1, 0, 0, 2)
+save_window_.label(0.939914, 0.424243, "ms", 2, 1, 0, 0, 1)
+save_window_.label(0.0321888, 0.753247, "mA/cm2", 2, 1, 0, 0, 1)
+save_window_.label(0.206008, 0.861472, "Currents vs Time", 2, 1, 0, 0, 1)//save_window_.addexpr("soma.ina_MCnaca( 0.5 )", 4, 2, 0.9999, 0.783772, 2)
+save_window_.addexpr("soma.ina_HHna( 0.5 )", 2, 2, 0.9999, 0.948997, 2)
+save_window_.addvar("soma.i_cap( 0.5 )", 1, 2, 0.99987, 0.791775, 2)
+save_window_.addexpr("soma.ik( 0.5 )", 3, 2, 0.99988, 1.01255, 2)
+save_window_.label(0.2897, 0.588745, "I Cap", 2, 1, 0, 0, 1)
+save_window_.label(0.755365, 0.744589, "I K", 2, 1, 0, 0, 3)//save_window_.addexpr("25*i_HHleak", 5, 2, 0.746352, 0.908658, 2)
+}
+objectvar scene_vector_[1]
+{doNotify()}
+
+//Calculate dV/dt
+
+vdot=0
+
+proc advance()	{	vold=soma.v(0.5)
+	fadvance()	vdot=(soma.v(.5) - vold)/dt
+}
+
+//next ses used to set HH as default Na channel
+
+//xopen("params.ses")
+
+objectvar save_window_, rvp_
+objectvar scene_vector_[8]
+objectvar ocbox_, ocbox_list_, scene_, scene_list_
+{ocbox_list_ = new List()  scene_list_ = new List()}
+{
+xpanel("Patch Parameters)", 0)
+soma.gnabar_HHna = 0.12
+xvalue("Na chan density, HH","soma.gnabar_HHna", 1,"", 0, 0 )
+//soma.gnabar_MCnaca = 0
+//xvalue("Na chan density, _MC","soma.gnabar_MCnaca", 1,"", 0, 0 )
+soma.gkbar_HHk = 0.036
+xvalue("K chan density, HH","soma.gkbar_HHk", 1,"", 0, 0 )
+soma.gkbar_HHkM = 0
+xvalue("K chan density, HHkM","soma.gkbar_HHkM", 1,"", 0, 0 )
+soma.ek = -77
+xvalue("ek","soma.ek", 1,"", 0, 0 )
+soma.ena = 50
+xvalue("ena","soma.ena", 1,"", 0, 0 )
+soma.g_HHleak = 0.0003
+xvalue("g_HHleak","soma.g_HHleak", 1,"", 0, 0 )
+soma.e_HHleak = -54.4
+xvalue("e_HHleak","soma.e_HHleak", 1,"", 0, 0 )
+xpanel(266,246)
+
+}
+objectvar scene_vector_[1]
+{doNotify()}
+
+
+
+proc HH()		{
+objectvar save_window_, rvp_
+objectvar scene_vector_[8]
+objectvar ocbox_, ocbox_list_, scene_, scene_list_
+{ocbox_list_ = new List()  scene_list_ = new List()}
+{
+xpanel("Patch Parameters)", 0)
+soma.gnabar_HHna = 0.12
+xvalue("gnabar_HHna","soma.gnabar_HHna", 1,"", 0, 0 )
+soma.gnabar_hh = 0.12
+soma.gkbar_HHk = 0.036
+xvalue("gkbar_HHk","soma.gkbar_HHk", 1,"", 0, 0 )
+soma.g_HHleak = 0.0003
+xvalue("g_HHleak","soma.g_HHleak", 1,"", 0, 0 )
+soma.e_HHleak = -54.4
+xvalue("gl_hh","soma.gl_hh", 1,"", 0, 0 )
+soma.el_hh = -54.4
+xvalue("el_hh","soma.el_hh", 1,"", 0, 0 )
+soma.ena = 50
+//xvalue("ena","soma.ena", 1,"", 0, 0 )
+soma.ek = -77
+//xvalue("ek","soma.ek", 1,"", 0, 0 )
+xpanel(261,241)
+}
+objectvar scene_vector_[1]
+{doNotify()}
+
+}
+
+proc HHRet()	{
+	v_init = -65
+	soma.gkbar_HHk = 0.036
+	soma.g_HHleak = 0.0003
+	soma.e_HHleak = -54.4
+	soma.gkbar_HHkM=0
+}
+
+
+proc vclamp()	{
+}
+
+proc hhna()	{
+	soma.gnabar_HHna=0.120
+	soma.e_HHleak = -54.4
+	soma.g_HHleak = .0003
+
+
+
+}
+
+proc printing()	{
+objectvar save_window_, rvp_
+objectvar scene_vector_[4]
+objectvar ocbox_, ocbox_list_, scene_, scene_list_
+{ocbox_list_ = new List()  scene_list_ = new List()}
+{pwman_place(530,530)}
+objectvar scene_vector_[1]
+{doNotify()}
+}
+
+proc HHM()	{
+	v_init = -70
+	soma.gkbar_HHk=0
+	soma.gkbar_HHkM=0.175
+	soma.g_HHleak = 0
+}
+
+
+//Iconify OSX 10.4
+if (unix_mac_pc()==4) {
+	printf("%c[2t", 27)
+}
+
+
+//Iconify OSX 10.5
+if (unix_mac_pc()==5) {
+//	printf("%c[2t", 27)
+}
+ 
+
